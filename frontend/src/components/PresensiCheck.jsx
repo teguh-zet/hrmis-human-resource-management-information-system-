@@ -16,6 +16,7 @@ function PresensiCheck({ userInfo, onLogout }) {
 
   useEffect(() => {
     loadStatusAbsen()
+    loadTodayPresensi()
   }, [])
 
   const loadStatusAbsen = async () => {
@@ -35,6 +36,32 @@ function PresensiCheck({ userInfo, onLogout }) {
     }
   }
 
+  const loadTodayPresensi = async () => {
+    try {
+      const now = new Date()
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
+      const tglAwal = Math.floor(todayStart.getTime() / 1000)
+      const tglAkhir = Math.floor(todayEnd.getTime() / 1000)
+
+      const response = await api.get('/presensi/daftar/pegawai', {
+        params: { tglAwal, tglAkhir }
+      })
+      
+      if (response.data && response.data.length > 0) {
+        const todayPresensi = response.data[0] // Ambil data pertama (hari ini)
+        if (todayPresensi.jamMasuk) {
+          setJamMasuk(todayPresensi.jamMasuk)
+        }
+        if (todayPresensi.jamKeluar) {
+          setJamKeluar(todayPresensi.jamKeluar)
+        }
+      }
+    } catch (err) {
+      console.error('Error loading today presensi:', err)
+    }
+  }
+
   const handleCheckIn = async () => {
     setLoading(true)
     setError('')
@@ -42,10 +69,20 @@ function PresensiCheck({ userInfo, onLogout }) {
 
     try {
       const response = await api.get('/presensi/in')
-      setJamMasuk(response.data.jamMasuk)
-      setMessage('Check-in berhasil!')
+      if (response.data && response.data.jamMasuk) {
+        setJamMasuk(response.data.jamMasuk)
+        setMessage('Check-in berhasil!')
+        // Refresh data presensi hari ini
+        setTimeout(() => {
+          loadTodayPresensi()
+        }, 500)
+      } else {
+        setError('Response tidak valid dari server')
+      }
     } catch (err) {
-      setError(err.response?.data || 'Gagal melakukan check-in')
+      const errorMessage = err.response?.data || 'Gagal melakukan check-in'
+      setError(errorMessage)
+      console.error('Check-in error:', err)
     } finally {
       setLoading(false)
     }
@@ -58,10 +95,20 @@ function PresensiCheck({ userInfo, onLogout }) {
 
     try {
       const response = await api.get('/presensi/out')
-      setJamKeluar(response.data.jamKeluar)
-      setMessage('Check-out berhasil!')
+      if (response.data && response.data.jamKeluar) {
+        setJamKeluar(response.data.jamKeluar)
+        setMessage('Check-out berhasil!')
+        // Refresh data presensi hari ini
+        setTimeout(() => {
+          loadTodayPresensi()
+        }, 500)
+      } else {
+        setError('Response tidak valid dari server')
+      }
     } catch (err) {
-      setError(err.response?.data || 'Gagal melakukan check-out')
+      const errorMessage = err.response?.data || 'Gagal melakukan check-out'
+      setError(errorMessage)
+      console.error('Check-out error:', err)
     } finally {
       setLoading(false)
     }

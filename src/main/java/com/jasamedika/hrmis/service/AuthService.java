@@ -38,13 +38,27 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data sudah diinisialisasi sebelumnya");
         }
 
+        // Validasi input
+        if (request.getNamaAdmin() == null || request.getNamaAdmin().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nama admin tidak boleh kosong");
+        }
+        if (request.getPerusahaan() == null || request.getPerusahaan().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nama perusahaan tidak boleh kosong");
+        }
+
         // Create perusahaan
+        String namaPerusahaan = request.getPerusahaan().trim();
+        if (namaPerusahaan.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nama perusahaan tidak boleh kosong");
+        }
+        
         Perusahaan perusahaan = new Perusahaan();
-        perusahaan.setNamaPerusahaan(request.getPerusahaan());
+        perusahaan.setNamaPerusahaan(namaPerusahaan);
         perusahaanRepository.save(perusahaan);
 
         // Generate admin credentials
-        String email = "admin@" + request.getPerusahaan().toLowerCase().replaceAll("\\s+", "") + ".com";
+        String perusahaanForEmail = namaPerusahaan.toLowerCase().replaceAll("\\s+", "");
+        String email = "admin@" + perusahaanForEmail + ".com";
         String password = generateRandomPassword();
         String idUser = UUID.randomUUID().toString();
 
@@ -111,6 +125,13 @@ public class AuthService {
 
         user.setPassword(passwordEncoder.encode(request.getPasswordBaru1()));
         userRepository.save(user);
+    }
+
+    public UserInfoDto getCurrentUserInfo(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                    "User tidak ditemukan"));
+        return pegawaiService.mapToUserInfoDto(user);
     }
 
     private String generateRandomPassword() {

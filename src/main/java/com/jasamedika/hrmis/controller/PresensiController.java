@@ -1,6 +1,5 @@
 package com.jasamedika.hrmis.controller;
 
-import com.jasamedika.hrmis.dto.PresensiAbsensiRequest;
 import com.jasamedika.hrmis.dto.PresensiDto;
 import com.jasamedika.hrmis.dto.StatusAbsenDto;
 import com.jasamedika.hrmis.service.PresensiService;
@@ -106,9 +105,21 @@ public class PresensiController {
 
     @PostMapping("/abseni")
     @Operation(summary = "Lapor Absensi/Izin", description = "Mencatat absensi dengan status (Izin, Sakit, Cuti, dll). Tanggal dalam format Epoch (detik).")
-    public ResponseEntity<?> absensi(@ModelAttribute PresensiAbsensiRequest request) {
+    public ResponseEntity<?> absensi(
+            @RequestParam(value = "tglAbsensi", required = false) Long tglAbsensi,
+            @RequestParam(value = "kdStatus", required = false) Integer kdStatus) {
+        // Validasi
+        if (tglAbsensi == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Tanggal absensi tidak boleh kosong");
+        }
+        if (kdStatus == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Status absensi tidak boleh kosong");
+        }
+        
         try {
-            presensiService.absensi(request.getTglAbsensi(), request.getKdStatus());
+            presensiService.absensi(tglAbsensi, kdStatus);
             return ResponseEntity.ok("Absensi berhasil direkam");
         } catch (org.springframework.web.server.ResponseStatusException e) {
             // Error dari API akan dihandle oleh GlobalExceptionHandler dan return 501

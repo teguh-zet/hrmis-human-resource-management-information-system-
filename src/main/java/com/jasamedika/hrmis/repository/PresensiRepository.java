@@ -14,10 +14,15 @@ public interface PresensiRepository extends JpaRepository<Presensi, Long> {
     @Query("SELECT p FROM Presensi p WHERE p.user.idUser = :idUser AND p.tglAbsensi = :tglAbsensi")
     Optional<Presensi> findByUserAndTglAbsensi(@Param("idUser") String idUser, @Param("tglAbsensi") Long tglAbsensi);
     
-    @Query("SELECT p FROM Presensi p WHERE p.user.idUser = :idUser AND p.tglAbsensi >= :tglAwal AND p.tglAbsensi <= :tglAkhir ORDER BY p.tglAbsensi DESC")
+    // Query untuk mencari presensi dalam range hari yang sama (untuk handle epoch yang tidak konsisten)
+    @Query("SELECT p FROM Presensi p WHERE p.user.idUser = :idUser AND p.tglAbsensi >= :tglAwal AND p.tglAbsensi < :tglAkhir ORDER BY p.tglAbsensi DESC")
     List<Presensi> findByUserAndDateRange(@Param("idUser") String idUser, @Param("tglAwal") Long tglAwal, @Param("tglAkhir") Long tglAkhir);
     
     @Query("SELECT p FROM Presensi p WHERE p.tglAbsensi >= :tglAwal AND p.tglAbsensi <= :tglAkhir ORDER BY p.tglAbsensi DESC")
     List<Presensi> findByDateRange(@Param("tglAwal") Long tglAwal, @Param("tglAkhir") Long tglAkhir);
+    
+    // Query untuk mencari presensi dalam range hari yang sama (untuk merge duplikat)
+    @Query("SELECT p FROM Presensi p WHERE p.user.idUser = :idUser AND p.tglAbsensi >= :startOfDay AND p.tglAbsensi < :endOfDay")
+    List<Presensi> findByUserAndSameDay(@Param("idUser") String idUser, @Param("startOfDay") Long startOfDay, @Param("endOfDay") Long endOfDay);
 }
 

@@ -39,7 +39,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 username = jwtUtil.extractUsername(jwt);
             } catch (Exception e) {
-                // Token invalid, continue without authentication
             }
         }
 
@@ -54,8 +53,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             } catch (Exception e) {
-                // Invalid token or user not found, continue without authentication
-                // Will be handled by Spring Security
             }
         }
         chain.doFilter(request, response);

@@ -28,6 +28,12 @@ function PegawaiList({ userInfo, onLogout }) {
     pendidikan: [],
     jenisKelamin: []
   })
+  const [showPhotoForm, setShowPhotoForm] = useState(false)
+  const [selectedPegawai, setSelectedPegawai] = useState(null)
+  const [photoFile, setPhotoFile] = useState(null)
+  const [photoFileName, setPhotoFileName] = useState('')
+  const [photoError, setPhotoError] = useState('')
+  const [photoLoading, setPhotoLoading] = useState(false)
 
   useEffect(() => {
     if (userInfo?.profile === 'Admin' || userInfo?.namaDepartemen === 'HRD') {
@@ -139,6 +145,57 @@ function PegawaiList({ userInfo, onLogout }) {
     if (!epoch) return '-'
     const date = new Date(epoch * 1000)
     return date.toLocaleDateString('id-ID')
+  }
+
+  const handleUbahPhoto = (pegawai) => {
+    setSelectedPegawai(pegawai)
+    setShowPhotoForm(true)
+    setPhotoFile(null)
+    setPhotoFileName('')
+    setPhotoError('')
+  }
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      setPhotoFile(file)
+      if (!photoFileName) {
+        setPhotoFileName(file.name)
+      }
+      setPhotoError('')
+    }
+  }
+
+  const handlePhotoSubmit = async (e) => {
+    e.preventDefault()
+    if (!photoFile || !photoFileName) {
+      setPhotoError('Pilih file foto dan isi nama file')
+      return
+    }
+
+    try {
+      setPhotoLoading(true)
+      setPhotoError('')
+      const formData = new FormData()
+      formData.append('idUser', selectedPegawai.idUser)
+      formData.append('namaFile', photoFileName)
+      formData.append('files', photoFile)
+
+      await api.post('/pegawai/admin-ubah-photo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+
+      setShowPhotoForm(false)
+      setSelectedPegawai(null)
+      setPhotoFile(null)
+      setPhotoFileName('')
+      loadPegawai()
+      alert('Foto pegawai berhasil diubah')
+    } catch (err) {
+      setPhotoError(err.response?.data || 'Gagal mengubah foto')
+    } finally {
+      setPhotoLoading(false)
+    }
   }
 
   if (userInfo?.profile !== 'Admin' && userInfo?.namaDepartemen !== 'HRD') {
@@ -291,6 +348,52 @@ function PegawaiList({ userInfo, onLogout }) {
             </div>
           )}
 
+          {showPhotoForm && (
+            <div className="card" style={{ marginTop: '20px', background: '#f8f9fa' }}>
+              <h3>Ubah Foto Pegawai: {selectedPegawai?.namaLengkap}</h3>
+              <form onSubmit={handlePhotoSubmit}>
+                <div className="form-group">
+                  <label>Nama File *</label>
+                  <input 
+                    type="text" 
+                    value={photoFileName} 
+                    onChange={(e) => setPhotoFileName(e.target.value)} 
+                    placeholder="contoh: foto-profil.jpg"
+                    required 
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Pilih File Foto *</label>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handlePhotoChange}
+                    required 
+                  />
+                </div>
+                {photoError && <div className="error">{photoError}</div>}
+                <div style={{ marginTop: '20px' }}>
+                  <button type="submit" className="btn btn-primary" disabled={photoLoading}>
+                    {photoLoading ? 'Mengunggah...' : 'Unggah Foto'}
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    style={{ marginLeft: '10px' }} 
+                    onClick={() => {
+                      setShowPhotoForm(false)
+                      setSelectedPegawai(null)
+                      setPhotoFile(null)
+                      setPhotoFileName('')
+                      setPhotoError('')
+                    }}>
+                    Batal
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
           {loading ? (
             <p>Loading...</p>
           ) : (
@@ -314,7 +417,8 @@ function PegawaiList({ userInfo, onLogout }) {
                     <td>{pegawai.namaDepartemen || '-'}</td>
                     <td>{formatEpoch(pegawai.tanggalLahir)}</td>
                     <td>
-                      <button className="btn btn-secondary" onClick={() => handleEdit(pegawai)}>Edit</button>
+                      <button className="btn btn-secondary" onClick={() => handleEdit(pegawai)} style={{ marginRight: '5px' }}>Edit</button>
+                      <button className="btn btn-secondary" onClick={() => handleUbahPhoto(pegawai)}>Ubah Foto</button>
                     </td>
                   </tr>
                 ))}

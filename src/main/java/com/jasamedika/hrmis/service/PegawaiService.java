@@ -183,26 +183,59 @@ public class PegawaiService {
     public void ubahPegawai(UbahPegawaiRequest request) {
         checkAdminOrHrd();
 
+        // Validasi idUser wajib
+        if (request.getIdUser() == null || request.getIdUser().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                "ID User tidak boleh kosong");
+        }
+
         User pegawai = userRepository.findById(request.getIdUser())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
                     "Pegawai tidak ditemukan"));
 
-        if (!request.getPassword().equals(request.getPasswordC())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
-                "Password tidak sama");
+        // Validasi password hanya jika diisi
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+            if (request.getPasswordC() == null || request.getPasswordC().trim().isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                    "Konfirmasi password harus diisi jika password diubah");
+            }
+            if (!request.getPassword().equals(request.getPasswordC())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                    "Password tidak sama");
+            }
         }
 
-        pegawai.setNamaLengkap(request.getNamaLengkap());
-        pegawai.setEmail(request.getEmail());
-        pegawai.setTempatLahir(request.getTempatLahir());
-        pegawai.setTanggalLahir(request.getTanggalLahir());
-        pegawai.setKdJenisKelamin(request.getKdJenisKelamin());
-        pegawai.setKdPendidikan(request.getKdPendidikan());
-        pegawai.setKdJabatan(request.getKdJabatan());
-        pegawai.setKdDepartemen(request.getKdDepartemen());
-        pegawai.setKdUnitKerja(request.getKdUnitKerja());
+        // Update field yang diisi saja (optional fields)
+        if (request.getNamaLengkap() != null && !request.getNamaLengkap().trim().isEmpty()) {
+            pegawai.setNamaLengkap(request.getNamaLengkap());
+        }
+        if (request.getEmail() != null && !request.getEmail().trim().isEmpty()) {
+            pegawai.setEmail(request.getEmail());
+        }
+        if (request.getTempatLahir() != null) {
+            pegawai.setTempatLahir(request.getTempatLahir());
+        }
+        if (request.getTanggalLahir() != null) {
+            pegawai.setTanggalLahir(request.getTanggalLahir());
+        }
+        if (request.getKdJenisKelamin() != null) {
+            pegawai.setKdJenisKelamin(request.getKdJenisKelamin());
+        }
+        if (request.getKdPendidikan() != null) {
+            pegawai.setKdPendidikan(request.getKdPendidikan());
+        }
+        if (request.getKdJabatan() != null) {
+            pegawai.setKdJabatan(request.getKdJabatan());
+        }
+        if (request.getKdDepartemen() != null) {
+            pegawai.setKdDepartemen(request.getKdDepartemen());
+        }
+        if (request.getKdUnitKerja() != null) {
+            pegawai.setKdUnitKerja(request.getKdUnitKerja());
+        }
         
-        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+        // Update password hanya jika diisi
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
             pegawai.setPassword(passwordEncoder.encode(request.getPassword()));
         }
         

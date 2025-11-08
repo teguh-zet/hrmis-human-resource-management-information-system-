@@ -33,9 +33,10 @@ function PresensiList({ userInfo, onLogout }) {
         })
       }
 
-      setPresensiList(response.data)
+      setPresensiList(response.data || [])
     } catch (err) {
       setError(err.response?.data || 'Gagal memuat data presensi')
+      setPresensiList([])
     } finally {
       setLoading(false)
     }
@@ -47,21 +48,48 @@ function PresensiList({ userInfo, onLogout }) {
     return date.toLocaleDateString('id-ID')
   }
 
-  // Set default dates (current month)
+  // Set default dates (current month) dan langsung load data
   useEffect(() => {
     const now = new Date()
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
     const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    setTglAwal(firstDay.toISOString().split('T')[0])
-    setTglAkhir(lastDay.toISOString().split('T')[0])
-  }, [])
+    const tglAwalStr = firstDay.toISOString().split('T')[0]
+    const tglAkhirStr = lastDay.toISOString().split('T')[0]
+    
+    setTglAwal(tglAwalStr)
+    setTglAkhir(tglAkhirStr)
 
-  // Auto load on mount
-  useEffect(() => {
-    if (tglAwal && tglAkhir) {
-      loadPresensi()
+    // Langsung load data setelah set dates
+    const loadData = async () => {
+      setLoading(true)
+      setError('')
+
+      try {
+        const tglAwalEpoch = Math.floor(firstDay.getTime() / 1000)
+        const tglAkhirEpoch = Math.floor(lastDay.getTime() / 1000)
+
+        let response
+        if (userInfo?.profile === 'Admin') {
+          response = await api.get('/presensi/daftar/admin', {
+            params: { tglAwal: tglAwalEpoch, tglAkhir: tglAkhirEpoch }
+          })
+        } else {
+          response = await api.get('/presensi/daftar/pegawai', {
+            params: { tglAwal: tglAwalEpoch, tglAkhir: tglAkhirEpoch }
+          })
+        }
+
+        setPresensiList(response.data || [])
+      } catch (err) {
+        setError(err.response?.data || 'Gagal memuat data presensi')
+        setPresensiList([])
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [])
+
+    loadData()
+  }, [userInfo])
 
   return (
     <div>

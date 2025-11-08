@@ -27,7 +27,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGenericException(Exception ex) {
-        // Error dari bugs/akses salah - return 400, 404, 500 dengan pesan mesin
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Internal Server Error: " + ex.getClass().getSimpleName() + " - " + ex.getMessage());
     }
