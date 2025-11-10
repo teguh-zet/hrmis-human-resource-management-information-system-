@@ -105,6 +105,44 @@ public class PegawaiController {
         }
     }
 
+    @GetMapping("/search")
+    @Operation(summary = "Search dan Filter Pegawai dengan Pagination", description = "Mencari dan memfilter daftar pegawai dengan pagination. Hanya Admin atau pegawai HRD yang dapat mengakses.")
+    public ResponseEntity<?> searchAndFilterPegawai(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer kdJabatan,
+            @RequestParam(required = false) Integer kdDepartemen,
+            @RequestParam(required = false) Integer kdUnitKerja,
+            @RequestParam(required = false) Integer kdPendidikan,
+            @RequestParam(required = false) Integer kdJenisKelamin,
+            @RequestParam(required = false) String profile,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "namaLengkap") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDir) {
+        try {
+            SearchFilterDto filter = new SearchFilterDto();
+            filter.setKeyword(keyword);
+            filter.setKdJabatan(kdJabatan);
+            filter.setKdDepartemen(kdDepartemen);
+            filter.setKdUnitKerja(kdUnitKerja);
+            filter.setKdPendidikan(kdPendidikan);
+            filter.setKdJenisKelamin(kdJenisKelamin);
+            filter.setProfile(profile);
+            filter.setPage(page);
+            filter.setSize(size);
+            filter.setSortBy(sortBy);
+            filter.setSortDir(sortDir);
+            
+            PageResponseDto<UserInfoDto> result = pegawaiService.searchAndFilterPegawai(filter);
+            return ResponseEntity.ok(result);
+        } catch (org.springframework.web.server.ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Internal Server Error: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+        }
+    }
+
     @PostMapping("/admin-tambah-pegawai")
     @Operation(summary = "Tambah Pegawai", description = "Menambahkan pegawai baru. Hanya Admin atau pegawai HRD yang dapat mengakses.")
     public ResponseEntity<?> tambahPegawai(@ModelAttribute TambahPegawaiRequest request) {

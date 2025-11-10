@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
+import com.jasamedika.hrmis.service.AuditLogService;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -17,6 +19,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private AuditLogService auditLogService;
 
     @PostMapping("/init-data")
     @Operation(summary = "Inisialisasi data awal", description = "Membuat data perusahaan dan admin pertama kali. Hanya bisa dilakukan sekali.")

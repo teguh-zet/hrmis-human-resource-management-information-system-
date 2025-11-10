@@ -22,6 +22,10 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @Service
 public class PegawaiService {
@@ -147,6 +151,42 @@ public class PegawaiService {
         return userRepository.findAll().stream()
                 .map(this::mapToUserInfoDto)
                 .collect(Collectors.toList());
+    }
+
+    public PageResponseDto<UserInfoDto> searchAndFilterPegawai(SearchFilterDto filter) {
+        checkAdminOrHrd();
+
+        Sort sort = filter.getSortDir().equalsIgnoreCase("DESC") 
+            ? Sort.by(Sort.Direction.DESC, filter.getSortBy())
+            : Sort.by(Sort.Direction.ASC, filter.getSortBy());
+        
+        Pageable pageable = PageRequest.of(filter.getPage(), filter.getSize(), sort);
+        
+        Page<User> userPage = userRepository.searchAndFilter(
+            filter.getKeyword(),
+            filter.getKdJabatan(),
+            filter.getKdDepartemen(),
+            filter.getKdUnitKerja(),
+            filter.getKdPendidikan(),
+            filter.getKdJenisKelamin(),
+            filter.getProfile(),
+            pageable
+        );
+
+        List<UserInfoDto> content = userPage.getContent().stream()
+                .map(this::mapToUserInfoDto)
+                .collect(Collectors.toList());
+
+        PageResponseDto<UserInfoDto> response = new PageResponseDto<>();
+        response.setContent(content);
+        response.setPage(userPage.getNumber());
+        response.setSize(userPage.getSize());
+        response.setTotalElements(userPage.getTotalElements());
+        response.setTotalPages(userPage.getTotalPages());
+        response.setFirst(userPage.isFirst());
+        response.setLast(userPage.isLast());
+
+        return response;
     }
 
     @Transactional
